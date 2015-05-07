@@ -19,6 +19,7 @@ namespace JpegDump
     internal class JpegStreamReader
     {
         private readonly BinaryReader reader;
+        private bool jpegLSStream = false;
 
         public JpegStreamReader(Stream stream)
         {
@@ -33,12 +34,21 @@ namespace JpegDump
                 if (c == 0xFF)
                 {
                     int markerCode = reader.BaseStream.ReadByte();
-                    if (markerCode > 0) // 0xFF00 a reserved value that are allowed in encoded data.
+                    if (IsMarkerCode(markerCode))
                     {
                         DumpMarker(markerCode);
                     }
                 }
             }
+        }
+
+        private bool IsMarkerCode(int code)
+        {
+            // To prevent marker codes in the encoded bit stream encoders must encode the next byte zero or the next bit zero (jpeg-ls).
+            if (jpegLSStream)
+                return (code & 0x80) == 0X80;
+
+            return code > 0;
         }
 
         private void DumpMarker(int markerCode)
@@ -56,6 +66,7 @@ namespace JpegDump
                     break;
 
                 case JpegMarker.StartOfFrameJpegLS:
+                    jpegLSStream = true;
                     DumpStartOfFrameJpegLS();
                     break;
 
@@ -64,7 +75,7 @@ namespace JpegDump
                     break;
 
                 default:
-                    //Console.WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
                     break;
             }
         }
