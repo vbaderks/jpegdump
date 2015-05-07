@@ -19,7 +19,7 @@ namespace JpegDump
     internal class JpegStreamReader
     {
         private readonly BinaryReader reader;
-        private bool jpegLSStream = false;
+        private bool jpegLSStream;
 
         public JpegStreamReader(Stream stream)
         {
