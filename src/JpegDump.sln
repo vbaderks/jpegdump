@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40302.0
+VisualStudioVersion = 12.0.40418.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JpegDump", "JpegDump\JpegDump.csproj", "{3089F99E-E8CD-481D-BC00-A2A3B3DDD6D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JpegDump", "JpegDump.csproj", "{3089F99E-E8CD-481D-BC00-A2A3B3DDD6D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
