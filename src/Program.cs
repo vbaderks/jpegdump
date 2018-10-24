@@ -76,6 +76,14 @@ namespace JpegDump
                     DumpStartOfScan();
                     break;
 
+                case JpegMarker.ApplicationData7:
+                    DumpApplicationData7();
+                    break;
+
+                case JpegMarker.ApplicationData8:
+                    DumpApplicationData8();
+                    break;
+
                 default:
                     Console.WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
                     break;
@@ -129,6 +137,27 @@ namespace JpegDump
             Console.WriteLine("{0:D8}  Transformation (?) = {1}", Position, reader.ReadByte());
         }
 
+        private void DumpApplicationData7()
+        {
+            Console.WriteLine("{0:D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            int size = ReadUInt16BigEndian();
+            Console.WriteLine("{0:D8}  Size = {1}", Position, size);
+            for (int i = 0; i < size - 2; i++)
+            {
+                reader.ReadByte();
+            }
+        }
+
+        private void DumpApplicationData8()
+        {
+            Console.WriteLine("{0:D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            int size = ReadUInt16BigEndian();
+            Console.WriteLine("{0:D8}  Size = {1}", Position, size);
+            for (int i = 0; i < size - 2; i++)
+            {
+                reader.ReadByte();
+            }
+        }
 
         private ushort ReadUInt16BigEndian()
         {
