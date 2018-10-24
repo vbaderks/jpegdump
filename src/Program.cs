@@ -1,9 +1,11 @@
-﻿using System;
+﻿// Copyright (c) Victor Derks. All rights reserved. See the accompanying "LICENSE.md" for licensed use.
+
+using System;
 using System.IO;
 
 namespace JpegDump
 {
-    enum JpegMarker
+    internal enum JpegMarker
     {
         StartOfImage = 0xD8, // SOI
         EndOfImage = 0xD9,   // EOI
@@ -85,13 +87,7 @@ namespace JpegDump
             return reader.BaseStream.Position - 2;
         }
 
-        private long Position
-        {
-            get
-            {
-                return reader.BaseStream.Position;
-            }
-        }
+        private long Position => reader.BaseStream.Position;
 
 
         private void DumpStartOfImageMarker()
@@ -141,7 +137,7 @@ namespace JpegDump
     }
 
 
-    public class Program
+    public static class Program
     {
         private static void Main(string[] args)
         {
