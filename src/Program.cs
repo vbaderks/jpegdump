@@ -13,7 +13,7 @@ namespace JpegDump
         StartOfFrameJpegLS = 0xF7,                  // SOF_55: Marks the start of a (JPEG-LS) encoded frame.
         JpegLSExtendedParameters = 0xF8,            // LSE:    JPEG-LS extended parameters.
         ApplicationData0 = 0xE0,                    // APP0: Application data 0: used for JFIF header.
-        ApplicationData7 = 0xE7,                    // APP7: Application data 7: colorspace.
+        ApplicationData7 = 0xE7,                    // APP7: Application data 7: color space.
         ApplicationData8 = 0xE8,                    // APP8: Application data 8: colorXForm.
         Comment = 0xFE                              // COM:  Comment block.
     }
@@ -187,7 +187,7 @@ namespace JpegDump
             }
             catch (IOException e)
             {
-                Console.WriteLine("Failed to open \\ parse file {0}, error: ", args[0], e.Message);
+                Console.WriteLine("Failed to open \\ parse file {0}, error: {1}", args[0], e.Message);
             }
         }
    }
