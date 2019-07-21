@@ -1,7 +1,8 @@
-﻿// Copyright (c) Victor Derks. All rights reserved. See the accompanying "LICENSE.md" for licensed use.
+// Copyright (c) Victor Derks. All rights reserved. See the accompanying "LICENSE.md" for licensed use.
 
 using System;
 using System.IO;
+using static System.Console;
 
 namespace JpegDump
 {
@@ -18,7 +19,7 @@ namespace JpegDump
         Comment = 0xFE                              // COM:  Comment block.
     }
 
-    internal class JpegStreamReader
+    internal sealed class JpegStreamReader : IDisposable
     {
         private readonly BinaryReader reader;
         private bool jpegLSStream;
@@ -28,18 +29,22 @@ namespace JpegDump
             reader = new BinaryReader(stream);
         }
 
+        public void Dispose()
+        {
+            reader.Dispose();
+        }
+
         public void Dump()
         {
             int c;
             while ((c = reader.BaseStream.ReadByte()) != -1)
             {
-                if (c == 0xFF)
+                if (c != 0xFF) continue;
+
+                int markerCode = reader.BaseStream.ReadByte();
+                if (IsMarkerCode(markerCode))
                 {
-                    int markerCode = reader.BaseStream.ReadByte();
-                    if (IsMarkerCode(markerCode))
-                    {
-                        DumpMarker(markerCode);
-                    }
+                    DumpMarker(markerCode);
                 }
             }
         }
@@ -57,19 +62,23 @@ namespace JpegDump
         {
             //  FFD0 to FFD9 and FF01, markers without size.
 
-            switch ((JpegMarker) markerCode)
+            switch ((JpegMarker)markerCode)
             {
                 case JpegMarker.StartOfImage:
                     DumpStartOfImageMarker();
                     break;
 
                 case JpegMarker.EndOfImage:
-                    Console.WriteLine("{0:D8} Marker 0xFFD9. EOI (End Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                    WriteLine("{0:D8} Marker 0xFFD9. EOI (End Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
                     break;
 
                 case JpegMarker.StartOfFrameJpegLS:
                     jpegLSStream = true;
                     DumpStartOfFrameJpegLS();
+                    break;
+
+                case JpegMarker.JpegLSExtendedParameters:
+                    DumpJpegLSExtendedParameters();
                     break;
 
                 case JpegMarker.StartOfScan:
@@ -84,8 +93,16 @@ namespace JpegDump
                     DumpApplicationData8();
                     break;
 
+                case JpegMarker.ApplicationData0:
+                    WriteLine("{0:D8} Marker 0xFFE0. App0 (Application Data 0), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                    break;
+
+                case JpegMarker.Comment:
+                    WriteLine("{0:D8} Marker 0xFFFE. COM (Comment), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                    break;
+
                 default:
-                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
+                    WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
                     break;
             }
         }
@@ -100,48 +117,72 @@ namespace JpegDump
 
         private void DumpStartOfImageMarker()
         {
-            Console.WriteLine("{0:D8} Marker 0xFFD8: SOI (Start Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            WriteLine("{0:D8} Marker 0xFFD8: SOI (Start Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
         }
 
         private void DumpStartOfFrameJpegLS()
         {
-            Console.WriteLine("{0:D8} Marker 0xFFF7: SOF_55 (Start Of Frame Jpeg-LS), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
-            Console.WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
-            Console.WriteLine("{0:D8}  Sample precision (P) = {1}", Position, reader.ReadByte());
-            Console.WriteLine("{0:D8}  Number of lines (Y) = {1}", Position, ReadUInt16BigEndian());
-            Console.WriteLine("{0:D8}  Number of samples per line (X) = {1}", Position, ReadUInt16BigEndian());
-            var componentCount = reader.ReadByte();
-            Console.WriteLine("{0:D8}  Number of image components in a frame (Nf) = {1}", Position, componentCount);
+            WriteLine("{0:D8} Marker 0xFFF7: SOF_55 (Start Of Frame Jpeg-LS), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
+            WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+            WriteLine("{0:D8}  Sample precision (P) = {1}", Position, reader.ReadByte());
+            WriteLine("{0:D8}  Number of lines (Y) = {1}", Position, ReadUInt16BigEndian());
+            WriteLine("{0:D8}  Number of samples per line (X) = {1}", Position, ReadUInt16BigEndian());
+            byte componentCount = reader.ReadByte();
+            WriteLine("{0:D8}  Number of image components in a frame (Nf) = {1}", Position, componentCount);
             for (int i = 0; i < componentCount; i++)
             {
-                Console.WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, reader.ReadByte());
-                Console.WriteLine("{0:D8}   H and V sampling factor (Hi + Vi) = {1}", Position, reader.ReadByte());
-                Console.WriteLine("{0:D8}   Quantization table (Tqi) [reserved, should be 0] = {1}", Position, reader.ReadByte());
+                WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, reader.ReadByte());
+                WriteLine("{0:D8}   H and V sampling factor (Hi + Vi) = {1}", Position, reader.ReadByte());
+                WriteLine("{0:D8}   Quantization table (Tqi) [reserved, should be 0] = {1}", Position, reader.ReadByte());
+            }
+        }
+
+        private void DumpJpegLSExtendedParameters()
+        {
+            WriteLine("{0:D8} Marker 0xFFF8: LSE (JPEG-LS ), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
+            WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+            byte type = reader.ReadByte();
+
+            Write("{0:D8}  Type = {1}", Position, type);
+            switch (type)
+            {
+                case 1:
+                    WriteLine(" (Preset coding parameters)");
+                    WriteLine("{0:D8}  MaximumSampleValue = {1}", Position, ReadUInt16BigEndian());
+                    WriteLine("{0:D8}  Threshold 1 = {1}", Position, ReadUInt16BigEndian());
+                    WriteLine("{0:D8}  Threshold 2 = {1}", Position, ReadUInt16BigEndian());
+                    WriteLine("{0:D8}  Threshold 3 = {1}", Position, ReadUInt16BigEndian());
+                    WriteLine("{0:D8}  Reset value = {1}", Position, ReadUInt16BigEndian());
+                    break;
+
+                default:
+                    WriteLine(" (Unknown");
+                    break;
             }
         }
 
         private void DumpStartOfScan()
         {
-            Console.WriteLine("{0:D8} Marker 0xFFDA: SOS (Start Of Scan), defined in ITU T.81/IEC 10918-1", GetStartOffset());
-            Console.WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
-            var componentCount = reader.ReadByte();
-            Console.WriteLine("{0:D8}  Component Count = {1}", Position, componentCount);
+            WriteLine("{0:D8} Marker 0xFFDA: SOS (Start Of Scan), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+            byte componentCount = reader.ReadByte();
+            WriteLine("{0:D8}  Component Count = {1}", Position, componentCount);
             for (int i = 0; i < componentCount; i++)
             {
-                Console.WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, reader.ReadByte());
-                Console.WriteLine("{0:D8}   Table? (?) = {1}", Position, reader.ReadByte());
+                WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, reader.ReadByte());
+                WriteLine("{0:D8}   Table? (?) = {1}", Position, reader.ReadByte());
             }
 
-            Console.WriteLine("{0:D8}  Allowed lossy error (?) = {1}", Position, reader.ReadByte());
-            Console.WriteLine("{0:D8}  Interleave mode (?) = {1}", Position, reader.ReadByte());
-            Console.WriteLine("{0:D8}  Transformation (?) = {1}", Position, reader.ReadByte());
+            WriteLine("{0:D8}  Allowed lossy error (?) = {1}", Position, reader.ReadByte());
+            WriteLine("{0:D8}  Interleave mode (?) = {1}", Position, reader.ReadByte());
+            WriteLine("{0:D8}  Transformation (?) = {1}", Position, reader.ReadByte());
         }
 
         private void DumpApplicationData7()
         {
-            Console.WriteLine("{0:D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            WriteLine("{0:D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1", GetStartOffset());
             int size = ReadUInt16BigEndian();
-            Console.WriteLine("{0:D8}  Size = {1}", Position, size);
+            WriteLine("{0:D8}  Size = {1}", Position, size);
             for (int i = 0; i < size - 2; i++)
             {
                 reader.ReadByte();
@@ -150,9 +191,9 @@ namespace JpegDump
 
         private void DumpApplicationData8()
         {
-            Console.WriteLine("{0:D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            WriteLine("{0:D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1", GetStartOffset());
             int size = ReadUInt16BigEndian();
-            Console.WriteLine("{0:D8}  Size = {1}", Position, size);
+            WriteLine("{0:D8}  Size = {1}", Position, size);
             for (int i = 0; i < size - 2; i++)
             {
                 reader.ReadByte();
@@ -172,23 +213,24 @@ namespace JpegDump
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage: jpegdump <filename>");
+                WriteLine("Usage: jpegdump <filename>");
                 return;
             }
 
             try
             {
                 using (var stream = new FileStream(args[0], FileMode.Open))
+                using (var reader = new JpegStreamReader(stream))
                 {
-                    Console.WriteLine("Dumping JPEG file: {0}", args[0]);
-                    Console.WriteLine("=============================================================================");
-                    new JpegStreamReader(stream).Dump();
+                    WriteLine("Dumping JPEG file: {0}", args[0]);
+                    WriteLine("=============================================================================");
+                    reader.Dump();
                 }
             }
             catch (IOException e)
             {
-                Console.WriteLine("Failed to open \\ parse file {0}, error: {1}", args[0], e.Message);
+                WriteLine("Failed to open \\ parse file {0}, error: {1}", args[0], e.Message);
             }
         }
-   }
+    }
 }
