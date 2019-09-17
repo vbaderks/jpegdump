@@ -1,4 +1,5 @@
-// Copyright (c) Victor Derks. All rights reserved. See the accompanying "LICENSE.md" for licensed use.
+// Copyright (c) Victor Derks.
+// SPDX-License-Identifier: MIT
 
 using System;
 using System.IO;
