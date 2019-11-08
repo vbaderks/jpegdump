@@ -171,12 +171,14 @@ namespace JpegDump
             for (int i = 0; i < componentCount; i++)
             {
                 WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, _reader.ReadByte());
-                WriteLine("{0:D8}   Table? (?) = {1}", Position, _reader.ReadByte());
+                byte mappingTableSelector = _reader.ReadByte();
+                WriteLine("{0:D8}   Mapping table selector = {1} {2}", Position, mappingTableSelector, mappingTableSelector == 0 ? "(None)": string.Empty);
             }
 
-            WriteLine("{0:D8}  Allowed lossy error (?) = {1}", Position, _reader.ReadByte());
-            WriteLine("{0:D8}  Interleave mode (?) = {1}", Position, _reader.ReadByte());
-            WriteLine("{0:D8}  Transformation (?) = {1}", Position, _reader.ReadByte());
+            WriteLine("{0:D8}  Near lossless (NEAR parameter) = {1}", Position, _reader.ReadByte());
+            byte interleaveMode = _reader.ReadByte();
+            WriteLine("{0:D8}  Interleave mode (ILV parameter) = {1} ({2})", Position, interleaveMode, GetInterleaveModeName(interleaveMode));
+            WriteLine("{0:D8}  Point Transform = {1}", Position, _reader.ReadByte());
         }
 
         private void DumpApplicationData7()
@@ -204,6 +206,17 @@ namespace JpegDump
         private ushort ReadUInt16BigEndian()
         {
             return (ushort)((_reader.ReadByte() << 8) | _reader.ReadByte());
+        }
+
+        private static string GetInterleaveModeName(byte interleaveMode)
+        {
+            switch (interleaveMode)
+            {
+                case 0: return "None";
+                case 1: return "Line";
+                case 2: return "Sample interleaved";
+                default: return "Invalid";
+            }
         }
     }
 
