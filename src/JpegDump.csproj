@@ -1,11 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputPath>..\bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>..\intermediate\$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <Nullable>enable</Nullable>
     <CodeAnalysisRuleSet>jpegdump.ruleset</CodeAnalysisRuleSet>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Company>Victor Derks</Company>
+    <Authors>Victor Derks</Authors>
+    <Copyright>Copyright (c) Victor Derks.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
