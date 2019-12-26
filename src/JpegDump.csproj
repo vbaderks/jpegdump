@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputPath>..\bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>..\intermediate\$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Nullable>enable</Nullable>
