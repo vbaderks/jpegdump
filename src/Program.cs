@@ -123,17 +123,21 @@ namespace JpegDump
 
         private void DumpStartOfFrameJpegLS()
         {
-            WriteLine("{0:D8} Marker 0xFFF7: SOF_55 (Start Of Frame Jpeg-LS), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
+            WriteLine("{0:D8} Marker 0xFFF7: SOF_55 (Start Of Frame JPEG-LS), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
             WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
             WriteLine("{0:D8}  Sample precision (P) = {1}", Position, _reader.ReadByte());
             WriteLine("{0:D8}  Number of lines (Y) = {1}", Position, ReadUInt16BigEndian());
             WriteLine("{0:D8}  Number of samples per line (X) = {1}", Position, ReadUInt16BigEndian());
+            long position = Position;
             byte componentCount = _reader.ReadByte();
-            WriteLine("{0:D8}  Number of image components in a frame (Nf) = {1}", Position, componentCount);
+            WriteLine("{0:D8}  Number of image components in a frame (Nf) = {1}", position, componentCount);
             for (int i = 0; i < componentCount; i++)
             {
                 WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, _reader.ReadByte());
-                WriteLine("{0:D8}   H and V sampling factor (Hi + Vi) = {1}", Position, _reader.ReadByte());
+
+                position = Position;
+                byte samplingFactor = _reader.ReadByte();
+                WriteLine("{0:D8}   H and V sampling factor (Hi + Vi) = {1} ({2} + {3})", position, samplingFactor, samplingFactor >> 4, samplingFactor & 0xF);
                 WriteLine("{0:D8}   Quantization table (Tqi) [reserved, should be 0] = {1}", Position, _reader.ReadByte());
             }
         }
@@ -213,7 +217,7 @@ namespace JpegDump
             switch (interleaveMode)
             {
                 case 0: return "None";
-                case 1: return "Line";
+                case 1: return "Line interleaved";
                 case 2: return "Sample interleaved";
                 default: return "Invalid";
             }
