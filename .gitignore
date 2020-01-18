@@ -21,3 +21,6 @@ intermediate/
 
 # Visual Studio settings folder
 .vs/
+
+# Visual Studio Code
+.vscode/
