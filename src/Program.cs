@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using static System.Console;
 
@@ -201,9 +202,49 @@ namespace JpegDump
             WriteLine("{0:D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1", GetStartOffset());
             int size = ReadUInt16BigEndian();
             WriteLine("{0:D8}  Size = {1}", Position, size);
-            for (int i = 0; i < size - 2; i++)
+            byte[] dataBytes = _reader.ReadBytes(size - 2);
+
+            if (TryDumpAsSpiffHeader(dataBytes))
+                return;
+
+            TryDumpAsSpiffEndOfDirectory(dataBytes);
+        }
+
+        private bool TryDumpAsSpiffHeader(IReadOnlyList<byte> dataBuffer)
+        {
+            if (dataBuffer.Count < 30)
+                return false;
+
+            if (!(dataBuffer[0] == 'S' && dataBuffer[1] == 'P' && dataBuffer[2] == 'I' && dataBuffer[3] == 'F' && dataBuffer[4] == 'F'))
+                return false;
+
+            WriteLine("{0:D8}  SPIFF Header, defined in ISO/IEC 10918-3, Annex F", GetStartOffset() - 28);
+            WriteLine("{0:D8}  High version = {1}", GetStartOffset() - 26, dataBuffer[6]);
+            WriteLine("{0:D8}  Low version = {1}", GetStartOffset() - 25, dataBuffer[7]);
+            WriteLine("{0:D8}  Profile id = {1}", GetStartOffset() - 24, dataBuffer[8]);
+            WriteLine("{0:D8}  Component count = {1}", GetStartOffset() - 23, dataBuffer[9]);
+            WriteLine("{0:D8}  Height = {1}", GetStartOffset() - 22, ConvertToUint32BigEndian(dataBuffer, 10));
+            WriteLine("{0:D8}  Width = {1}", GetStartOffset() - 18, ConvertToUint32BigEndian(dataBuffer, 14));
+            WriteLine("{0:D8}  Color Space = {1} ({2})", GetStartOffset() - 14, dataBuffer[18], GetColorSpaceName(dataBuffer[18]));
+            WriteLine("{0:D8}  Bits per sample = {1}", GetStartOffset() - 13, dataBuffer[19]);
+            WriteLine("{0:D8}  Compression Type = {1} ({2})", GetStartOffset() - 12, dataBuffer[20], GetCompressionTypeName(dataBuffer[20]));
+            WriteLine("{0:D8}  Resolution Units = {1} ({2})", GetStartOffset() - 11, dataBuffer[21], GetResolutionUnitsName(dataBuffer[21]));
+            WriteLine("{0:D8}  Vertical resolution = {1}", GetStartOffset() - 10, ConvertToUint32BigEndian(dataBuffer, 22));
+            WriteLine("{0:D8}  Horizontal resolution = {1}", GetStartOffset() - 6, ConvertToUint32BigEndian(dataBuffer, 26));
+
+            return true;
+        }
+
+        private void TryDumpAsSpiffEndOfDirectory(IReadOnlyList<byte> dataBuffer)
+        {
+            if (dataBuffer.Count != 6)
+                return;
+
+            uint entryType = ConvertToUint32BigEndian(dataBuffer, 0);
+            if (entryType == 1)
             {
-                _reader.ReadByte();
+                WriteLine("{0:D8}  SPIFF EndOfDirectory Entry, defined in ISO/IEC 10918-3, Annex F",
+                    GetStartOffset() - 4);
             }
         }
 
@@ -212,15 +253,66 @@ namespace JpegDump
             return (ushort)((_reader.ReadByte() << 8) | _reader.ReadByte());
         }
 
+        private static uint ConvertToUint32BigEndian(IReadOnlyList<byte> buffer, int index)
+        {
+            return (uint)(buffer[index] << 24 | buffer[index + 1] << 16 | buffer[index + 2] << 8 | buffer[index + 3]);
+        }
+
         private static string GetInterleaveModeName(byte interleaveMode)
         {
-            switch (interleaveMode)
+            return interleaveMode switch {
+                0 => "None",
+                1 => "Line interleaved",
+                2 => "Sample interleaved",
+                _ => "Invalid"
+            };
+        }
+
+        private static string GetColorSpaceName(byte colorSpace)
+        {
+            return colorSpace switch
             {
-                case 0: return "None";
-                case 1: return "Line interleaved";
-                case 2: return "Sample interleaved";
-                default: return "Invalid";
-            }
+                0 => "Bi-level black",
+                1 => "ITU-R BT.709 Video",
+                2 => "None",
+                3 => "ITU-R BT.601-1. (RGB)",
+                4 => "ITU-R BT.601-1. (video)",
+                8 => "Gray-scale",
+                9 => "Photo CD™",
+                10 => "RGB",
+                11 => "CMY",
+                12 => "CMYK",
+                13 => "Transformed CMYK",
+                14 => "CIE 1976(L * a * b *)",
+                15 => "Bi-level white",
+                _ => "Unknown"
+            };
+        }
+
+        private static string GetCompressionTypeName(byte compressionType)
+        {
+            return compressionType switch
+            {
+                0 => "Uncompressed",
+                1 => "Modified Huffman",
+                2 => "Modified READ",
+                3 => "Modified Modified READ",
+                4 => "ISO/IEC 11544 (JBIG)",
+                5 => "ISO/IEC 10918-1 or ISO/IEC 10918-3 (JPEG)",
+                6 => "ISO/IEC 14495-1 or ISO/IEC 14495-2 (JPEG-LS)",
+                _ => "Unknown"
+            };
+        }
+
+        private static string GetResolutionUnitsName(byte resolutionUnitName)
+        {
+            return resolutionUnitName switch
+            {
+                0 => "Aspect Ratio",
+                1 => "Dots per Inch",
+                2 => "Dots per Centimeter",
+                _ => "Unknown"
+            };
         }
     }
 
