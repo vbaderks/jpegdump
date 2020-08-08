@@ -191,10 +191,9 @@ namespace JpegDump
             WriteLine("{0:D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1", GetStartOffset());
             int size = ReadUInt16BigEndian();
             WriteLine("{0:D8}  Size = {1}", Position, size);
-            for (int i = 0; i < size - 2; i++)
-            {
-                _reader.ReadByte();
-            }
+            byte[] dataBytes = _reader.ReadBytes(size - 2);
+
+            TryDumpAsHPColorSpace(dataBytes);
         }
 
         private void DumpApplicationData8()
@@ -207,7 +206,10 @@ namespace JpegDump
             if (TryDumpAsSpiffHeader(dataBytes))
                 return;
 
-            TryDumpAsSpiffEndOfDirectory(dataBytes);
+            if (TryDumpAsSpiffEndOfDirectory(dataBytes))
+                return;
+
+            TryDumpAsHPColorTransformation(dataBytes);
         }
 
         private bool TryDumpAsSpiffHeader(IReadOnlyList<byte> dataBuffer)
@@ -235,10 +237,10 @@ namespace JpegDump
             return true;
         }
 
-        private void TryDumpAsSpiffEndOfDirectory(IReadOnlyList<byte> dataBuffer)
+        private bool TryDumpAsSpiffEndOfDirectory(IReadOnlyList<byte> dataBuffer)
         {
             if (dataBuffer.Count != 6)
-                return;
+                return false;
 
             uint entryType = ConvertToUint32BigEndian(dataBuffer, 0);
             if (entryType == 1)
@@ -246,6 +248,34 @@ namespace JpegDump
                 WriteLine("{0:D8}  SPIFF EndOfDirectory Entry, defined in ISO/IEC 10918-3, Annex F",
                     GetStartOffset() - 4);
             }
+
+            return true;
+        }
+
+        private void TryDumpAsHPColorTransformation(IReadOnlyList<byte> dataBuffer)
+        {
+            if (dataBuffer.Count != 5)
+                return;
+
+            // Check for 'xfrm' stored in little endian
+            if (!(dataBuffer[0] == 0x6D && dataBuffer[1] == 0x72 && dataBuffer[2] == 0x66 && dataBuffer[3] == 0x78))
+                return;
+
+            WriteLine("{0:D8}  HP colorXForm, defined by HP JPEG-LS implementation", GetStartOffset() - 3);
+            WriteLine("{0:D8}  Transformation = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorTransformationName(dataBuffer[4]));
+        }
+
+        private void TryDumpAsHPColorSpace(IReadOnlyList<byte> dataBuffer)
+        {
+            if (dataBuffer.Count != 5)
+                return;
+
+            // Check for 'colr' stored in little endian
+            if (!(dataBuffer[0] == 0x72 && dataBuffer[1] == 0x6C && dataBuffer[2] == 0x6F && dataBuffer[3] == 0x63))
+                return;
+
+            WriteLine("{0:D8}  HP color space, defined by HP JPEG-LS implementation", GetStartOffset() - 3);
+            WriteLine("{0:D8}  Color Space = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorSpaceName(dataBuffer[4]));
         }
 
         private ushort ReadUInt16BigEndian()
@@ -304,9 +334,9 @@ namespace JpegDump
             };
         }
 
-        private static string GetResolutionUnitsName(byte resolutionUnitName)
+        private static string GetResolutionUnitsName(byte resolutionUnit)
         {
-            return resolutionUnitName switch
+            return resolutionUnit switch
             {
                 0 => "Aspect Ratio",
                 1 => "Dots per Inch",
@@ -314,8 +344,37 @@ namespace JpegDump
                 _ => "Unknown"
             };
         }
-    }
 
+        private static string GetHPColorTransformationName(byte colorTransformation)
+        {
+            return colorTransformation switch
+            {
+                1 => "HP1",
+                2 => "HP2",
+                3 => "HP3",
+                4 => "RGB as YUV lossy",
+                5 => "Matrix",
+                _ => "Unknown"
+            };
+        }
+
+        private static string GetHPColorSpaceName(byte colorSpace)
+        {
+            return colorSpace switch
+            {
+                1 => "Gray",
+                2 => "Palettized",
+                3 => "RGB",
+                4 => "YUV",
+                5 => "HSV",
+                6 => "HSB",
+                7 => "HSL",
+                8 => "LAB",
+                9 => "CMYK",
+                _ => "Unknown"
+            };
+        }
+    }
 
     public static class Program
     {
