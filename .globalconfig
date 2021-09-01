@@ -1,0 +1,19 @@
+# Copyright (c) Victor Derks.
+# SPDX-License-Identifier: MIT
+
+# The following configuration settings are used to control the build-in .NET analyzer in the C# compiler (Roslyn).
+# All warnings are by default enabled in the projects, some warnings type are however to noisy and not effective.
+is_global = true
+
+# Default severity for analyzer diagnostics - Requires **VS2019 16.5** or later
+dotnet_analyzer_diagnostic.severity = error
+
+# CA1014: Mark assemblies with CLSCompliantAttribute
+# Rational to disable: legacy rule, currently under review to remove.
+dotnet_diagnostic.CA1014.severity = none
+
+# CA1303: literal string used instead of string from resource
+# Rational: Only English is used, no support for other languages by design.
+dotnet_diagnostic.CA1303.severity = none
+
+dotnet_diagnostic.IDE0130.severity = none

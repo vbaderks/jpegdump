@@ -55,10 +55,7 @@ namespace JpegDump
         private bool IsMarkerCode(int code)
         {
             // To prevent marker codes in the encoded bit stream encoders must encode the next byte zero or the next bit zero (jpeg-ls).
-            if (_jpegLSStream)
-                return (code & 0x80) == 0X80;
-
-            return code > 0;
+            return _jpegLSStream ? (code & 0x80) == 0X80 : code > 0;
         }
 
         private void DumpMarker(int markerCode)
@@ -182,7 +179,7 @@ namespace JpegDump
             {
                 WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, _reader.ReadByte());
                 byte mappingTableSelector = _reader.ReadByte();
-                WriteLine("{0:D8}   Mapping table selector = {1} {2}", Position, mappingTableSelector, mappingTableSelector == 0 ? "(None)": string.Empty);
+                WriteLine("{0:D8}   Mapping table selector = {1} {2}", Position, mappingTableSelector, mappingTableSelector == 0 ? "(None)" : string.Empty);
             }
 
             WriteLine("{0:D8}  Near lossless (NEAR parameter) = {1}", Position, _reader.ReadByte());
@@ -297,7 +294,7 @@ namespace JpegDump
 
         private static uint ConvertToUint32BigEndian(IReadOnlyList<byte> buffer, int index)
         {
-            return (uint)(buffer[index] << 24 | buffer[index + 1] << 16 | buffer[index + 2] << 8 | buffer[index + 3]);
+            return (uint)((buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3]);
         }
 
         private static string GetInterleaveModeName(byte interleaveMode)
@@ -312,8 +309,7 @@ namespace JpegDump
 
         private static string GetColorSpaceName(byte colorSpace)
         {
-            return colorSpace switch
-            {
+            return colorSpace switch {
                 0 => "Bi-level black",
                 1 => "ITU-R BT.709 Video",
                 2 => "None",
@@ -333,8 +329,7 @@ namespace JpegDump
 
         private static string GetCompressionTypeName(byte compressionType)
         {
-            return compressionType switch
-            {
+            return compressionType switch {
                 0 => "Uncompressed",
                 1 => "Modified Huffman",
                 2 => "Modified READ",
@@ -348,8 +343,7 @@ namespace JpegDump
 
         private static string GetResolutionUnitsName(byte resolutionUnit)
         {
-            return resolutionUnit switch
-            {
+            return resolutionUnit switch {
                 0 => "Aspect Ratio",
                 1 => "Dots per Inch",
                 2 => "Dots per Centimeter",
@@ -359,8 +353,7 @@ namespace JpegDump
 
         private static string GetHPColorTransformationName(byte colorTransformation)
         {
-            return colorTransformation switch
-            {
+            return colorTransformation switch {
                 1 => "HP1",
                 2 => "HP2",
                 3 => "HP3",
@@ -372,8 +365,7 @@ namespace JpegDump
 
         private static string GetHPColorSpaceName(byte colorSpace)
         {
-            return colorSpace switch
-            {
+            return colorSpace switch {
                 1 => "Gray",
                 2 => "Palettized",
                 3 => "RGB",
