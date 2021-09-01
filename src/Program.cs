@@ -13,6 +13,7 @@ namespace JpegDump
         StartOfImage = 0xD8,               // SOI
         EndOfImage = 0xD9,                 // EOI
         StartOfScan = 0xDA,                // SOS
+        DefineRestartInterval = 0xDD,      // DRI
         StartOfFrameJpegLS = 0xF7,         // SOF_55: Marks the start of a (JPEG-LS) encoded frame.
         JpegLSExtendedParameters = 0xF8,   // LSE: JPEG-LS extended parameters.
         ApplicationData0 = 0xE0,           // APP0: Application data 0: used for JFIF header.
@@ -85,6 +86,10 @@ namespace JpegDump
 
                 case JpegMarker.StartOfScan:
                     DumpStartOfScan();
+                    break;
+
+                case JpegMarker.DefineRestartInterval:
+                    DumpDefineRestartInterval();
                     break;
 
                 case JpegMarker.ApplicationData7:
@@ -184,6 +189,13 @@ namespace JpegDump
             byte interleaveMode = _reader.ReadByte();
             WriteLine("{0:D8}  Interleave mode (ILV parameter) = {1} ({2})", Position, interleaveMode, GetInterleaveModeName(interleaveMode));
             WriteLine("{0:D8}  Point Transform = {1}", Position, _reader.ReadByte());
+        }
+
+        private void DumpDefineRestartInterval()
+        {
+            WriteLine("{0:D8} Marker 0xFFDD: DRI (Define Restart Interval), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+            WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+            WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt16BigEndian());
         }
 
         private void DumpApplicationData7()

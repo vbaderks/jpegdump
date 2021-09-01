@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Default Rules for JPEG Dump project" Description="These rules are for the VS static analyzer." ToolsVersion="16.0">
-  <IncludeAll Action="Error" />
-  <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
-    <Rule Id="CA1303" Action="None" />
-  </Rules>
-</RuleSet>
