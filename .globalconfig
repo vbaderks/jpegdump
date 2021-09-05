@@ -16,4 +16,6 @@ dotnet_diagnostic.CA1014.severity = none
 # Rational: Only English is used, no support for other languages by design.
 dotnet_diagnostic.CA1303.severity = none
 
+# IDE0130: Namespace '' does not match folder structure
+# Rational: Only English is used, no support for other languages by design.
 dotnet_diagnostic.IDE0130.severity = none

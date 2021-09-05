@@ -10,6 +10,14 @@ namespace JpegDump
 {
     internal enum JpegMarker
     {
+        Restart0 = 0xD0,                   // RST0
+        Restart1 = 0xD1,                   // RST1
+        Restart2 = 0xD2,                   // RST2
+        Restart3 = 0xD3,                   // RST3
+        Restart4 = 0xD4,                   // RST4
+        Restart5 = 0xD5,                   // RST5
+        Restart6 = 0xD6,                   // RST6
+        Restart7 = 0xD7,                   // RST7
         StartOfImage = 0xD8,               // SOI
         EndOfImage = 0xD9,                 // EOI
         StartOfScan = 0xDA,                // SOS
@@ -64,6 +72,18 @@ namespace JpegDump
 
             switch ((JpegMarker)markerCode)
             {
+                case JpegMarker.Restart0:
+                case JpegMarker.Restart1:
+                case JpegMarker.Restart2:
+                case JpegMarker.Restart3:
+                case JpegMarker.Restart4:
+                case JpegMarker.Restart5:
+                case JpegMarker.Restart6:
+                case JpegMarker.Restart7:
+                    WriteLine("{0:D8} Marker 0xFF{1:X}. RST{2} (Restart Marker {2}), defined in ITU T.81/IEC 10918-1",
+                        GetStartOffset(), markerCode, markerCode - JpegMarker.Restart0);
+                    break;
+
                 case JpegMarker.StartOfImage:
                     DumpStartOfImageMarker();
                     break;
@@ -191,8 +211,27 @@ namespace JpegDump
         private void DumpDefineRestartInterval()
         {
             WriteLine("{0:D8} Marker 0xFFDD: DRI (Define Restart Interval), defined in ITU T.81/IEC 10918-1", GetStartOffset());
-            WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
-            WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt16BigEndian());
+            ushort size = ReadUInt16BigEndian();
+            WriteLine("{0:D8}  Size = {1}", Position, size);
+
+            // ISO/IEC 14495-1, C.2.5 extends DRI to allow usage of 2-4 bytes for the interval.
+            switch (size)
+            {
+                case 4:
+                    WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt16BigEndian());
+                    break;
+
+                case 5:
+                    WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt24BigEndian());
+                    break;
+
+                case 6:
+                    WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt32BigEndian());
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         private void DumpApplicationData7()
@@ -290,6 +329,16 @@ namespace JpegDump
         private ushort ReadUInt16BigEndian()
         {
             return (ushort)((_reader.ReadByte() << 8) | _reader.ReadByte());
+        }
+
+        private uint ReadUInt24BigEndian()
+        {
+            return (ushort)((_reader.ReadByte() << 16) | (_reader.ReadByte() << 8) | _reader.ReadByte());
+        }
+
+        private uint ReadUInt32BigEndian()
+        {
+            return (uint)((_reader.ReadByte() << 24) | (_reader.ReadByte() << 16) | (_reader.ReadByte() << 8) | _reader.ReadByte());
         }
 
         private static uint ConvertToUint32BigEndian(IReadOnlyList<byte> buffer, int index)
