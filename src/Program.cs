@@ -27,6 +27,7 @@ namespace JpegDump
         ApplicationData0 = 0xE0,           // APP0: Application data 0: used for JFIF header.
         ApplicationData7 = 0xE7,           // APP7: Application data 7: color space.
         ApplicationData8 = 0xE8,           // APP8: Application data 8: colorXForm.
+        ApplicationData14 = 0xEE,          // APP14: Application data 14: used by Adobe
         Comment = 0xFE                     // COM:  Comment block.
     }
 
@@ -109,6 +110,10 @@ namespace JpegDump
                     DumpDefineRestartInterval();
                     break;
 
+                case JpegMarker.ApplicationData0:
+                    WriteLine("{0:D8} Marker 0xFFE0. App0 (Application Data 0), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                    break;
+
                 case JpegMarker.ApplicationData7:
                     DumpApplicationData7();
                     break;
@@ -117,8 +122,8 @@ namespace JpegDump
                     DumpApplicationData8();
                     break;
 
-                case JpegMarker.ApplicationData0:
-                    WriteLine("{0:D8} Marker 0xFFE0. App0 (Application Data 0), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                case JpegMarker.ApplicationData14:
+                    DumpApplicationData14();
                     break;
 
                 case JpegMarker.Comment:
@@ -260,6 +265,17 @@ namespace JpegDump
             TryDumpAsHPColorTransformation(dataBytes);
         }
 
+        private void DumpApplicationData14()
+        {
+            WriteLine("{0:D8} Marker 0xFFEE: APP14 (Application Data 14), defined in ITU T.81/IEC 10918-1",
+                GetStartOffset());
+            int size = ReadUInt16BigEndian();
+            WriteLine("{0:D8}  Size = {1}", Position - 2, size);
+            byte[] dataBytes = _reader.ReadBytes(size - 2);
+
+            TryDumpAsAdobeApp14(dataBytes, Position - dataBytes.Length);
+        }
+
         private bool TryDumpAsSpiffHeader(IReadOnlyList<byte> dataBuffer)
         {
             if (dataBuffer.Count < 30)
@@ -313,6 +329,23 @@ namespace JpegDump
             WriteLine("{0:D8}  Transformation = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorTransformationName(dataBuffer[4]));
         }
 
+        private static void TryDumpAsAdobeApp14(IReadOnlyList<byte> dataBuffer, long startPosition)
+        {
+            if (dataBuffer.Count != 5 + 2 + 2 + 2 + 1)
+                return;
+
+            // Check for 'Adobe'
+            if (!(dataBuffer[0] == 'A' && dataBuffer[1] == 'd' && dataBuffer[2] == 'o' && dataBuffer[3] == 'b' && dataBuffer[4] == 'e'))
+                return;
+
+            WriteLine("{0:D8}  APP14 'Adobe' identifier", startPosition);
+            int index = 5;
+            uint version = ConvertToUint16FromBigEndian(dataBuffer, index);
+            WriteLine("{0:D8}   Version {1}", startPosition + index, version);
+            index += 6;
+            WriteLine("{0:D8}   ColorSpace {1} (0 = Unknown (monochrome or RGB), 1 = YCbCr, 2 = YCCK)", startPosition + index, dataBuffer[index]);
+        }
+
         private void TryDumpAsHPColorSpace(IReadOnlyList<byte> dataBuffer)
         {
             if (dataBuffer.Count != 5)
@@ -344,6 +377,11 @@ namespace JpegDump
         private static uint ConvertToUint32BigEndian(IReadOnlyList<byte> buffer, int index)
         {
             return (uint)((buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3]);
+        }
+
+        private static uint ConvertToUint16FromBigEndian(IReadOnlyList<byte> buffer, int index)
+        {
+            return (uint)((buffer[index] << 8) | buffer[index + 1]);
         }
 
         private static string GetInterleaveModeName(byte interleaveMode)
