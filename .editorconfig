@@ -42,6 +42,7 @@ csharp_style_expression_bodied_properties = true:error
 csharp_style_inlined_variable_declaration = false:error
 csharp_style_var_for_built_in_types = false:error
 csharp_style_var_when_type_is_apparent = true:error
+csharp_style_namespace_declarations = file_scoped:error
 
 dotnet_sort_system_directives_first = true
 
