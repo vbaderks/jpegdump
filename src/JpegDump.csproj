@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 Copyright (c) Victor Derks.
 SPDX-License-Identifier: MIT
 -->
@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
 
     <OutputPath>..\build\bin\$(Configuration)\</OutputPath>
@@ -22,6 +22,7 @@ SPDX-License-Identifier: MIT
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
 

@@ -51,3 +51,7 @@ dotnet_style_predefined_type_for_locals_parameters_members = true:error
 dotnet_style_qualification_for_field = false:error
 dotnet_style_qualification_for_method = false:error
 dotnet_style_qualification_for_property = false:error
+
+# CA1852: Type 'Program' can be sealed because it has no subtypes in its containing assembly and is not externall
+# Rational: false warning, caused by compiler generated class "program"
+dotnet_diagnostic.CA1852.severity = none
