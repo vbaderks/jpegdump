@@ -5,15 +5,10 @@ using static System.Console;
 
 namespace JpegDump;
 
-internal sealed class JpegStreamReader : IDisposable
+internal sealed class JpegStreamReader(Stream stream) : IDisposable
 {
-    private readonly BinaryReader _reader;
+    private readonly BinaryReader _reader = new(stream);
     private bool _jpegLSStream;
-
-    public JpegStreamReader(Stream stream)
-    {
-        _reader = new BinaryReader(stream);
-    }
 
     public void Dispose()
     {
