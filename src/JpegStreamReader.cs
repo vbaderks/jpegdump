@@ -245,9 +245,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         TryDumpAsAdobeApp14(dataBytes, Position - dataBytes.Length);
     }
 
-    private bool TryDumpAsSpiffHeader(IReadOnlyList<byte> dataBuffer)
+    private bool TryDumpAsSpiffHeader(byte[] dataBuffer)
     {
-        if (dataBuffer.Count < 30)
+        if (dataBuffer.Length < 30)
             return false;
 
         if (!(dataBuffer[0] == 'S' && dataBuffer[1] == 'P' && dataBuffer[2] == 'I' && dataBuffer[3] == 'F' && dataBuffer[4] == 'F'))
@@ -270,9 +270,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         return true;
     }
 
-    private bool TryDumpAsSpiffEndOfDirectory(IReadOnlyList<byte> dataBuffer)
+    private bool TryDumpAsSpiffEndOfDirectory(byte[] dataBuffer)
     {
-        if (dataBuffer.Count != 6)
+        if (dataBuffer.Length != 6)
             return false;
 
         uint entryType = ConvertToUint32BigEndian(dataBuffer, 0);
@@ -285,9 +285,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         return true;
     }
 
-    private void TryDumpAsHPColorTransformation(IReadOnlyList<byte> dataBuffer)
+    private void TryDumpAsHPColorTransformation(byte[] dataBuffer)
     {
-        if (dataBuffer.Count != 5)
+        if (dataBuffer.Length != 5)
             return;
 
         // Check for 'xfrm' stored in little endian
@@ -298,9 +298,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         WriteLine("{0:D8}  Transformation = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorTransformationName(dataBuffer[4]));
     }
 
-    private static void TryDumpAsAdobeApp14(IReadOnlyList<byte> dataBuffer, long startPosition)
+    private static void TryDumpAsAdobeApp14(byte[] dataBuffer, long startPosition)
     {
-        if (dataBuffer.Count != 5 + 2 + 2 + 2 + 1)
+        if (dataBuffer.Length != 5 + 2 + 2 + 2 + 1)
             return;
 
         // Check for 'Adobe'
@@ -315,9 +315,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         WriteLine("{0:D8}   ColorSpace {1} (0 = Unknown (monochrome or RGB), 1 = YCbCr, 2 = YCCK)", startPosition + index, dataBuffer[index]);
     }
 
-    private void TryDumpAsHPColorSpace(IReadOnlyList<byte> dataBuffer)
+    private void TryDumpAsHPColorSpace(byte[] dataBuffer)
     {
-        if (dataBuffer.Count != 5)
+        if (dataBuffer.Length != 5)
             return;
 
         // Check for 'colr' stored in little endian
@@ -343,12 +343,12 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         return (uint)((_reader.ReadByte() << 24) | (_reader.ReadByte() << 16) | (_reader.ReadByte() << 8) | _reader.ReadByte());
     }
 
-    private static uint ConvertToUint32BigEndian(IReadOnlyList<byte> buffer, int index)
+    private static uint ConvertToUint32BigEndian(byte[] buffer, int index)
     {
         return (uint)((buffer[index] << 24) | (buffer[index + 1] << 16) | (buffer[index + 2] << 8) | buffer[index + 3]);
     }
 
-    private static uint ConvertToUint16FromBigEndian(IReadOnlyList<byte> buffer, int index)
+    private static uint ConvertToUint16FromBigEndian(byte[] buffer, int index)
     {
         return (uint)((buffer[index] << 8) | buffer[index + 1]);
     }
