@@ -11,7 +11,7 @@ if (args.Length < 1)
 
 try
 {
-    WriteLine("Dumping JPEG file: {0}", args[0]);
+    WriteLine($"Dumping JPEG file: {args[0]}");
     WriteLine("=============================================================================");
 
     using var stream = new FileStream(args[0], FileMode.Open);
@@ -20,5 +20,5 @@ try
 }
 catch (IOException e)
 {
-    WriteLine("Failed to open \\ parse file {0}, error: {1}", args[0], e.Message);
+    WriteLine($@"Failed to open \ parse file {args[0]}, error: {e.Message}");
 }

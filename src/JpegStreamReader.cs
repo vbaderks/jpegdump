@@ -50,8 +50,8 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
             case JpegMarker.Restart5:
             case JpegMarker.Restart6:
             case JpegMarker.Restart7:
-                WriteLine("{0:D8} Marker 0xFF{1:X}. RST{2} (Restart Marker {2}), defined in ITU T.81/IEC 10918-1",
-                    GetStartOffset(), markerCode, markerCode - JpegMarker.Restart0);
+                WriteLine(
+                    $"{GetStartOffset():D8} Marker 0xFF{markerCode:X}. RST{markerCode - JpegMarker.Restart0} (Restart Marker {markerCode - JpegMarker.Restart0}), defined in ITU T.81/IEC 10918-1");
                 break;
 
             case JpegMarker.StartOfImage:
@@ -59,7 +59,7 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
                 break;
 
             case JpegMarker.EndOfImage:
-                WriteLine("{0:D8} Marker 0xFFD9. EOI (End Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                WriteLine($"{GetStartOffset():D8} Marker 0xFFD9. EOI (End Of Image), defined in ITU T.81/IEC 10918-1");
                 break;
 
             case JpegMarker.StartOfFrameJpegLS:
@@ -80,7 +80,7 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
                 break;
 
             case JpegMarker.ApplicationData0:
-                WriteLine("{0:D8} Marker 0xFFE0. App0 (Application Data 0), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                WriteLine($"{GetStartOffset():D8} Marker 0xFFE0. App0 (Application Data 0), defined in ITU T.81/IEC 10918-1");
                 break;
 
             case JpegMarker.ApplicationData7:
@@ -96,11 +96,11 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
                 break;
 
             case JpegMarker.Comment:
-                WriteLine("{0:D8} Marker 0xFFFE. COM (Comment), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+                WriteLine($"{GetStartOffset():D8} Marker 0xFFFE. COM (Comment), defined in ITU T.81/IEC 10918-1");
                 break;
 
             default:
-                WriteLine("{0:D8} Marker 0xFF{1:X}", GetStartOffset(), markerCode);
+                WriteLine($"{GetStartOffset():D8} Marker 0xFF{markerCode:X}");
                 break;
         }
     }
@@ -115,46 +115,46 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
 
     private void DumpStartOfImageMarker()
     {
-        WriteLine("{0:D8} Marker 0xFFD8: SOI (Start Of Image), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFD8: SOI (Start Of Image), defined in ITU T.81/IEC 10918-1");
     }
 
     private void DumpStartOfFrameJpegLS()
     {
-        WriteLine("{0:D8} Marker 0xFFF7: SOF_55 (Start Of Frame JPEG-LS), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
-        WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
-        WriteLine("{0:D8}  Sample precision (P) = {1}", Position, _reader.ReadByte());
-        WriteLine("{0:D8}  Number of lines (Y) = {1}", Position, ReadUInt16BigEndian());
-        WriteLine("{0:D8}  Number of samples per line (X) = {1}", Position, ReadUInt16BigEndian());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFF7: SOF_55 (Start Of Frame JPEG-LS), defined in ITU T.87/IEC 14495-1 JPEG LS");
+        WriteLine($"{Position:D8}  Size = {ReadUInt16BigEndian()}");
+        WriteLine($"{Position:D8}  Sample precision (P) = {_reader.ReadByte()}");
+        WriteLine($"{Position:D8}  Number of lines (Y) = {ReadUInt16BigEndian()}");
+        WriteLine($"{Position:D8}  Number of samples per line (X) = {ReadUInt16BigEndian()}");
         long position = Position;
         byte componentCount = _reader.ReadByte();
-        WriteLine("{0:D8}  Number of image components in a frame (Nf) = {1}", position, componentCount);
+        WriteLine($"{position:D8}  Number of image components in a frame (Nf) = {componentCount}");
         for (int i = 0; i < componentCount; i++)
         {
-            WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, _reader.ReadByte());
+            WriteLine($"{Position:D8}   Component identifier (Ci) = {_reader.ReadByte()}");
 
             position = Position;
             byte samplingFactor = _reader.ReadByte();
-            WriteLine("{0:D8}   H and V sampling factor (Hi + Vi) = {1} ({2} + {3})", position, samplingFactor, samplingFactor >> 4, samplingFactor & 0xF);
-            WriteLine("{0:D8}   Quantization table (Tqi) [reserved, should be 0] = {1}", Position, _reader.ReadByte());
+            WriteLine($"{position:D8}   H and V sampling factor (Hi + Vi) = {samplingFactor} ({samplingFactor >> 4} + {samplingFactor & 0xF})");
+            WriteLine($"{Position:D8}   Quantization table (Tqi) [reserved, should be 0] = {_reader.ReadByte()}");
         }
     }
 
     private void DumpJpegLSExtendedParameters()
     {
-        WriteLine("{0:D8} Marker 0xFFF8: LSE (JPEG-LS ), defined in ITU T.87/IEC 14495-1 JPEG LS", GetStartOffset());
-        WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFF8: LSE (JPEG-LS ), defined in ITU T.87/IEC 14495-1 JPEG LS");
+        WriteLine($"{Position:D8}  Size = {ReadUInt16BigEndian()}");
         byte type = _reader.ReadByte();
 
-        Write("{0:D8}  Type = {1}", Position, type);
+        Write($"{Position:D8}  Type = {type}");
         switch (type)
         {
             case 1:
                 WriteLine(" (Preset coding parameters)");
-                WriteLine("{0:D8}  MaximumSampleValue = {1}", Position, ReadUInt16BigEndian());
-                WriteLine("{0:D8}  Threshold 1 = {1}", Position, ReadUInt16BigEndian());
-                WriteLine("{0:D8}  Threshold 2 = {1}", Position, ReadUInt16BigEndian());
-                WriteLine("{0:D8}  Threshold 3 = {1}", Position, ReadUInt16BigEndian());
-                WriteLine("{0:D8}  Reset value = {1}", Position, ReadUInt16BigEndian());
+                WriteLine($"{Position:D8}  MaximumSampleValue = {ReadUInt16BigEndian()}");
+                WriteLine($"{Position:D8}  Threshold 1 = {ReadUInt16BigEndian()}");
+                WriteLine($"{Position:D8}  Threshold 2 = {ReadUInt16BigEndian()}");
+                WriteLine($"{Position:D8}  Threshold 3 = {ReadUInt16BigEndian()}");
+                WriteLine($"{Position:D8}  Reset value = {ReadUInt16BigEndian()}");
                 break;
 
             default:
@@ -165,42 +165,42 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
 
     private void DumpStartOfScan()
     {
-        WriteLine("{0:D8} Marker 0xFFDA: SOS (Start Of Scan), defined in ITU T.81/IEC 10918-1", GetStartOffset());
-        WriteLine("{0:D8}  Size = {1}", Position, ReadUInt16BigEndian());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFDA: SOS (Start Of Scan), defined in ITU T.81/IEC 10918-1");
+        WriteLine($"{Position:D8}  Size = {ReadUInt16BigEndian()}");
         byte componentCount = _reader.ReadByte();
-        WriteLine("{0:D8}  Component Count = {1}", Position, componentCount);
+        WriteLine($"{Position:D8}  Component Count = {componentCount}");
         for (int i = 0; i < componentCount; i++)
         {
-            WriteLine("{0:D8}   Component identifier (Ci) = {1}", Position, _reader.ReadByte());
+            WriteLine($"{Position:D8}   Component identifier (Ci) = {_reader.ReadByte()}");
             byte mappingTableSelector = _reader.ReadByte();
-            WriteLine("{0:D8}   Mapping table selector = {1} {2}", Position, mappingTableSelector, mappingTableSelector == 0 ? "(None)" : string.Empty);
+            WriteLine($"{Position:D8}   Mapping table selector = {mappingTableSelector} {(mappingTableSelector == 0 ? "(None)" : string.Empty)}");
         }
 
-        WriteLine("{0:D8}  Near lossless (NEAR parameter) = {1}", Position, _reader.ReadByte());
+        WriteLine($"{Position:D8}  Near lossless (NEAR parameter) = {_reader.ReadByte()}");
         byte interleaveMode = _reader.ReadByte();
-        WriteLine("{0:D8}  Interleave mode (ILV parameter) = {1} ({2})", Position, interleaveMode, GetInterleaveModeName(interleaveMode));
-        WriteLine("{0:D8}  Point Transform = {1}", Position, _reader.ReadByte());
+        WriteLine($"{Position:D8}  Interleave mode (ILV parameter) = {interleaveMode} ({GetInterleaveModeName(interleaveMode)})");
+        WriteLine($"{Position:D8}  Point Transform = {_reader.ReadByte()}");
     }
 
     private void DumpDefineRestartInterval()
     {
-        WriteLine("{0:D8} Marker 0xFFDD: DRI (Define Restart Interval), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFDD: DRI (Define Restart Interval), defined in ITU T.81/IEC 10918-1");
         ushort size = ReadUInt16BigEndian();
-        WriteLine("{0:D8}  Size = {1}", Position, size);
+        WriteLine($"{Position:D8}  Size = {size}");
 
         // ISO/IEC 14495-1, C.2.5 extends DRI to allow usage of 2-4 bytes for the interval.
         switch (size)
         {
             case 4:
-                WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt16BigEndian());
+                WriteLine($"{Position:D8}  Restart Interval = {ReadUInt16BigEndian()}");
                 break;
 
             case 5:
-                WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt24BigEndian());
+                WriteLine($"{Position:D8}  Restart Interval = {ReadUInt24BigEndian()}");
                 break;
 
             case 6:
-                WriteLine("{0:D8}  Restart Interval = {1}", Position, ReadUInt32BigEndian());
+                WriteLine($"{Position:D8}  Restart Interval = {ReadUInt32BigEndian()}");
                 break;
 
             default:
@@ -210,9 +210,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
 
     private void DumpApplicationData7()
     {
-        WriteLine("{0:D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFE7: APP7 (Application Data 7), defined in ITU T.81/IEC 10918-1");
         int size = ReadUInt16BigEndian();
-        WriteLine("{0:D8}  Size = {1}", Position, size);
+        WriteLine($"{Position:D8}  Size = {size}");
         byte[] dataBytes = _reader.ReadBytes(size - 2);
 
         TryDumpAsHPColorSpace(dataBytes);
@@ -220,9 +220,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
 
     private void DumpApplicationData8()
     {
-        WriteLine("{0:D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1", GetStartOffset());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFE8: APP8 (Application Data 8), defined in ITU T.81/IEC 10918-1");
         int size = ReadUInt16BigEndian();
-        WriteLine("{0:D8}  Size = {1}", Position, size);
+        WriteLine($"{Position:D8}  Size = {size}");
         byte[] dataBytes = _reader.ReadBytes(size - 2);
 
         if (TryDumpAsSpiffHeader(dataBytes))
@@ -236,10 +236,9 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
 
     private void DumpApplicationData14()
     {
-        WriteLine("{0:D8} Marker 0xFFEE: APP14 (Application Data 14), defined in ITU T.81/IEC 10918-1",
-            GetStartOffset());
+        WriteLine($"{GetStartOffset():D8} Marker 0xFFEE: APP14 (Application Data 14), defined in ITU T.81/IEC 10918-1");
         int size = ReadUInt16BigEndian();
-        WriteLine("{0:D8}  Size = {1}", Position - 2, size);
+        WriteLine($"{Position - 2:D8}  Size = {size}");
         byte[] dataBytes = _reader.ReadBytes(size - 2);
 
         TryDumpAsAdobeApp14(dataBytes, Position - dataBytes.Length);
@@ -253,19 +252,19 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         if (!(dataBuffer[0] == 'S' && dataBuffer[1] == 'P' && dataBuffer[2] == 'I' && dataBuffer[3] == 'F' && dataBuffer[4] == 'F'))
             return false;
 
-        WriteLine("{0:D8}  SPIFF Header, defined in ISO/IEC 10918-3, Annex F", GetStartOffset() - 28);
-        WriteLine("{0:D8}  High version = {1}", GetStartOffset() - 26, dataBuffer[6]);
-        WriteLine("{0:D8}  Low version = {1}", GetStartOffset() - 25, dataBuffer[7]);
-        WriteLine("{0:D8}  Profile id = {1}", GetStartOffset() - 24, dataBuffer[8]);
-        WriteLine("{0:D8}  Component count = {1}", GetStartOffset() - 23, dataBuffer[9]);
-        WriteLine("{0:D8}  Height = {1}", GetStartOffset() - 22, ConvertToUint32BigEndian(dataBuffer, 10));
-        WriteLine("{0:D8}  Width = {1}", GetStartOffset() - 18, ConvertToUint32BigEndian(dataBuffer, 14));
-        WriteLine("{0:D8}  Color Space = {1} ({2})", GetStartOffset() - 14, dataBuffer[18], GetColorSpaceName(dataBuffer[18]));
-        WriteLine("{0:D8}  Bits per sample = {1}", GetStartOffset() - 13, dataBuffer[19]);
-        WriteLine("{0:D8}  Compression Type = {1} ({2})", GetStartOffset() - 12, dataBuffer[20], GetCompressionTypeName(dataBuffer[20]));
-        WriteLine("{0:D8}  Resolution Units = {1} ({2})", GetStartOffset() - 11, dataBuffer[21], GetResolutionUnitsName(dataBuffer[21]));
-        WriteLine("{0:D8}  Vertical resolution = {1}", GetStartOffset() - 10, ConvertToUint32BigEndian(dataBuffer, 22));
-        WriteLine("{0:D8}  Horizontal resolution = {1}", GetStartOffset() - 6, ConvertToUint32BigEndian(dataBuffer, 26));
+        WriteLine($"{GetStartOffset() - 28:D8}  SPIFF Header, defined in ISO/IEC 10918-3, Annex F");
+        WriteLine($"{GetStartOffset() - 26:D8}  High version = {dataBuffer[6]}");
+        WriteLine($"{GetStartOffset() - 25:D8}  Low version = {dataBuffer[7]}");
+        WriteLine($"{GetStartOffset() - 24:D8}  Profile id = {dataBuffer[8]}");
+        WriteLine($"{GetStartOffset() - 23:D8}  Component count = {dataBuffer[9]}");
+        WriteLine($"{GetStartOffset() - 22:D8}  Height = {ConvertToUint32BigEndian(dataBuffer, 10)}");
+        WriteLine($"{GetStartOffset() - 18:D8}  Width = {ConvertToUint32BigEndian(dataBuffer, 14)}");
+        WriteLine($"{GetStartOffset() - 14:D8}  Color Space = {dataBuffer[18]} ({GetColorSpaceName(dataBuffer[18])})");
+        WriteLine($"{GetStartOffset() - 13:D8}  Bits per sample = {dataBuffer[19]}");
+        WriteLine($"{GetStartOffset() - 12:D8}  Compression Type = {dataBuffer[20]} ({GetCompressionTypeName(dataBuffer[20])})");
+        WriteLine($"{GetStartOffset() - 11:D8}  Resolution Units = {dataBuffer[21]} ({GetResolutionUnitsName(dataBuffer[21])})");
+        WriteLine($"{GetStartOffset() - 10:D8}  Vertical resolution = {ConvertToUint32BigEndian(dataBuffer, 22)}");
+        WriteLine($"{GetStartOffset() - 6:D8}  Horizontal resolution = {ConvertToUint32BigEndian(dataBuffer, 26)}");
 
         return true;
     }
@@ -278,8 +277,7 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         uint entryType = ConvertToUint32BigEndian(dataBuffer, 0);
         if (entryType == 1)
         {
-            WriteLine("{0:D8}  SPIFF EndOfDirectory Entry, defined in ISO/IEC 10918-3, Annex F",
-                GetStartOffset() - 4);
+            WriteLine($"{GetStartOffset() - 4:D8}  SPIFF EndOfDirectory Entry, defined in ISO/IEC 10918-3, Annex F");
         }
 
         return true;
@@ -294,8 +292,8 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         if (!(dataBuffer[0] == 0x6D && dataBuffer[1] == 0x72 && dataBuffer[2] == 0x66 && dataBuffer[3] == 0x78))
             return;
 
-        WriteLine("{0:D8}  HP colorXForm, defined by HP JPEG-LS implementation", GetStartOffset() - 3);
-        WriteLine("{0:D8}  Transformation = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorTransformationName(dataBuffer[4]));
+        WriteLine($"{GetStartOffset() - 3:D8}  HP colorXForm, defined by HP JPEG-LS implementation");
+        WriteLine($"{GetStartOffset():D8}  Transformation = {dataBuffer[4]} ({GetHPColorTransformationName(dataBuffer[4])})");
     }
 
     private static void TryDumpAsAdobeApp14(byte[] dataBuffer, long startPosition)
@@ -307,12 +305,12 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         if (!(dataBuffer[0] == 'A' && dataBuffer[1] == 'd' && dataBuffer[2] == 'o' && dataBuffer[3] == 'b' && dataBuffer[4] == 'e'))
             return;
 
-        WriteLine("{0:D8}  APP14 'Adobe' identifier", startPosition);
+        WriteLine($"{startPosition:D8}  APP14 'Adobe' identifier");
         int index = 5;
         uint version = ConvertToUint16FromBigEndian(dataBuffer, index);
-        WriteLine("{0:D8}   Version {1}", startPosition + index, version);
+        WriteLine($"{startPosition + index:D8}   Version {version}");
         index += 6;
-        WriteLine("{0:D8}   ColorSpace {1} (0 = Unknown (monochrome or RGB), 1 = YCbCr, 2 = YCCK)", startPosition + index, dataBuffer[index]);
+        WriteLine($"{startPosition + index:D8}   ColorSpace {dataBuffer[index]} (0 = Unknown (monochrome or RGB), 1 = YCbCr, 2 = YCCK)");
     }
 
     private void TryDumpAsHPColorSpace(byte[] dataBuffer)
@@ -324,8 +322,8 @@ internal sealed class JpegStreamReader(Stream stream) : IDisposable
         if (!(dataBuffer[0] == 0x72 && dataBuffer[1] == 0x6C && dataBuffer[2] == 0x6F && dataBuffer[3] == 0x63))
             return;
 
-        WriteLine("{0:D8}  HP color space, defined by HP JPEG-LS implementation", GetStartOffset() - 3);
-        WriteLine("{0:D8}  Color Space = {1} ({2})", GetStartOffset(), dataBuffer[4], GetHPColorSpaceName(dataBuffer[4]));
+        WriteLine($"{GetStartOffset() - 3:D8}  HP color space, defined by HP JPEG-LS implementation");
+        WriteLine($"{GetStartOffset():D8}  Color Space = {dataBuffer[4]} ({GetHPColorSpaceName(dataBuffer[4])})");
     }
 
     private ushort ReadUInt16BigEndian()
