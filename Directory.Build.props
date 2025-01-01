@@ -1,0 +1,13 @@
+<!--
+SPDX-FileCopyrightText: © 2024 Victor Derks.
+SPDX-License-Identifier: MIT
+-->
+
+<Project>
+  <PropertyGroup>
+
+    <!-- Build -->
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+
+  </PropertyGroup>
+</Project>

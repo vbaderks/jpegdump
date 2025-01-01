@@ -1,5 +1,5 @@
 <!--
-Copyright (c) Victor Derks.
+SPDX-FileCopyrightText: © 2015 Victor Derks.
 SPDX-License-Identifier: MIT
 -->
 
@@ -9,11 +9,8 @@ SPDX-License-Identifier: MIT
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-
-    <OutputPath>..\build\bin\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\build\intermediate\$(MSBuildProjectName)\$(Configuration)\</IntermediateOutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Nullable>enable</Nullable>
+
     <Company>Victor Derks</Company>
     <Authors>Victor Derks</Authors>
     <Copyright>Copyright (c) Victor Derks.</Copyright>
